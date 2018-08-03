@@ -44,8 +44,8 @@ const unsigned long interval = 3600000 / MEASURMENTS_PER_HOUR;
 unsigned long pressure, pressure_array[MEASURMENTS_PER_HOUR], measure_timer, backlight_timer;
 byte time_array[MEASURMENTS_PER_HOUR];
 float temperature, humidity;
+byte angle, last_angle;
 bool backlight_flag;
-byte angle;
 
 enum enum_custom_chars {sun_1, sun_2, cloud_1, cloud_2, termometr, droplet, celsius, barometr};
 const byte custom_chars[8][8] = {
@@ -90,7 +90,9 @@ void setup() {
   delay(1000);
   servo.write(SERVO_RIGHT);
   delay(1000);
-  servo.write(round((SERVO_LEFT + SERVO_RIGHT) / 2.0));
+  angle = round((SERVO_LEFT + SERVO_RIGHT) / 2.0);
+  last_angle = angle;
+  servo.write(angle);
   delay(1000);
   digitalWrite(SERVO_POWER_PIN, LOW);
   pressure = ReadAveragePressure();
@@ -137,11 +139,14 @@ void loop() {
     if (pressure_array[0]) {
       angle = map(CalculateMNKCoefficient() * MEASURMENTS_PER_HOUR, -250, 250, SERVO_LEFT, SERVO_RIGHT);
       angle = constrain(angle, min(SERVO_LEFT, SERVO_RIGHT), max(SERVO_LEFT, SERVO_RIGHT));
-      digitalWrite(SERVO_POWER_PIN, HIGH);
-      delay(1000);
-      servo.write(angle);
-      delay(1000);
-      digitalWrite(SERVO_POWER_PIN, LOW);
+      if (angle != last_angle) {
+        digitalWrite(SERVO_POWER_PIN, HIGH);
+        delay(1000);
+        servo.write(angle);
+        delay(1000);
+        digitalWrite(SERVO_POWER_PIN, LOW);
+        last_angle = angle;
+      }
 
       // Debug mode
       // Serial.println("Set servo on angle " + String(angle));
