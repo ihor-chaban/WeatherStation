@@ -44,7 +44,7 @@ const unsigned long interval = 3600000 / MEASURMENTS_PER_HOUR;
 unsigned long pressure, pressure_array[MEASURMENTS_PER_HOUR], measure_timer, backlight_timer;
 byte time_array[MEASURMENTS_PER_HOUR];
 float temperature, humidity;
-byte angle, last_angle;
+int angle, last_angle;
 bool backlight_flag;
 
 enum enum_custom_chars {sun_1, sun_2, cloud_1, cloud_2, termometr, droplet, celsius, barometr};
@@ -119,7 +119,7 @@ void setup() {
 }
 
 void loop() {
-  if ((millis() - measure_timer) >= interval) {
+  if (millis() - measure_timer >= interval) {
     pressure = ReadAveragePressure();
     temperature = dht.readTemperature();
     humidity = dht.readHumidity();
@@ -131,11 +131,11 @@ void loop() {
     if (isnan(temperature) || isnan(humidity)) {
       ShowErrorScreen(false);
     }
-    PrintValuesToLCD();
     for (byte i = 0; i < MEASURMENTS_PER_HOUR - 1; i++) {
       pressure_array[i] = pressure_array[i + 1];
     }
     pressure_array[MEASURMENTS_PER_HOUR - 1] = pressure;
+    PrintValuesToLCD();
     if (pressure_array[0]) {
       angle = map(CalculateMNKCoefficient() * MEASURMENTS_PER_HOUR, -250, 250, SERVO_LEFT, SERVO_RIGHT);
       angle = constrain(angle, min(SERVO_LEFT, SERVO_RIGHT), max(SERVO_LEFT, SERVO_RIGHT));
@@ -162,7 +162,7 @@ void loop() {
     }
     backlight_timer = millis();
   }
-  if (backlight_flag && ((millis() - backlight_timer) >= STANDBY_TIME)) {
+  if (backlight_flag && (millis() - backlight_timer >= STANDBY_TIME)) {
     backlight_flag = false;
     lcd.noBacklight();
   }
